@@ -9,11 +9,8 @@ WOUNDMAPPING = {0: 0.5, 1: 0.667, 2: 0.83, 3: 0.83, 4: 0.83, 5: 0.83, 6: 0.83,
 SAVERATIO = {6: 0.167, 5: 0.33, 4: 0.5, 3: 0.667, 2: 0.83}
 
 
-def check_init(unit_one, unit_two):
+def check_init(u1_init, u2_init):
     """check who goes first"""
-
-    u1_init = unit_one['initiative']
-    u2_init = unit_two['initiative']
 
     if u1_init > u2_init:
         return {'first': 'unit_one', 'second': 'unit_two'}
@@ -25,27 +22,27 @@ def check_init(unit_one, unit_two):
 
 def generate_attacks(model_att_value, number_of_models, charging=False):
     """this will generate the number of attacks"""
-    attacks = model_att_value * number_of_models
+    attacks = int(model_att_value) * int(number_of_models)
     if charging:
         attacks = attacks + number_of_models
+    #fixme this is returning a sequence and the wrong number too
     return attacks
 
 
 def resolve_deaths(wounds_value, number_of_models, amount_of_unsaved_wounds):
     """figure out the amount of casualities suffered"""
     units_wounds = wounds_value * number_of_models
-    new_number_of_models = units_wounds - amount_of_unsaved_wounds
-    if new_number_of_models < 1:
-        return "unit destroyed"
+    print units_wounds, amount_of_unsaved_wounds
+    new_number_of_models = int(units_wounds) - amount_of_unsaved_wounds
     return new_number_of_models
 
 
 def melee_to_hit(attacker_ws, defender_ws, number_of_attacks):
     """checks the percentages of hits"""
-    hit_rate = 0.5
+    hit_rate = float(0.5)
     if attacker_ws > defender_ws:
-        hit_rate = 0.667
-    return number_of_attacks * hit_rate
+        hit_rate = float(0.667)
+    return int(number_of_attacks) * hit_rate
 
 
 def to_wound(attacker_str, defender_tough, number_of_hits):
@@ -77,17 +74,19 @@ def combat_result(defender, attacker, attacks):
     enemy_invun = None
     wounds = melee_to_hit(attacker['ws'], defender['ws'], attacks)
     saves = to_wound(attacker['strength'], defender['toughness'], wounds)
-    if defender['invun_save']:
-                enemy_invun = defender['invun_save']
-    wounds_caused = armour_save(attacker['ap'], defender['save'], saves, enemy_invun)
-
+    try:
+        if defender['invun_save']:
+                    enemy_invun = defender['invun_save']
+    except KeyError:
+        enemy_invun = None
+    wounds_caused = armour_save(attacker['ap'], defender['save'], saves,
+                                enemy_invun)
     return wounds_caused
 
 
 def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
     """this will work out the sequence of combat based on init"""
 
-    print 'I made it here'
     #expand the units
     try:
         unit_one = stats_listing.assorted[unit_one.lower()]
@@ -98,22 +97,23 @@ def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
     except KeyError:
         return 'error with unit 2'
 
-
     charging = False
     #figure out who attacks first to remove valid models from unit_two
     init_order = check_init(unit_one['initiative'], unit_two['initiative'])
 
+
     if init_order['first'] == 'unit_one':
         if who_charged == unit_one:
+            #fixme unit_one is a dict, and who_charged is a unit name
             charging = True
         friendly_attacks = generate_attacks(unit_one['attacks'], unit_one_size,
                                             charging)
         wounds = combat_result(unit_two, unit_one, friendly_attacks)
-
         new_size_of_unit_two = resolve_deaths(unit_two['wounds'], unit_two_size,
                                               wounds)
+        # print new_size_of_unit_two
         if new_size_of_unit_two < 1:
-            return "wiped out"
+            print "wiped out"
         first_kill_tally = unit_two_size - new_size_of_unit_two
         if who_charged == unit_two:
                 charging = True
