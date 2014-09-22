@@ -101,7 +101,6 @@ def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
     #figure out who attacks first to remove valid models from unit_two
     init_order = check_init(unit_one['initiative'], unit_two['initiative'])
 
-
     if init_order['first'] == 'unit_one':
         if who_charged == unit_one:
             #fixme unit_one is a dict, and who_charged is a unit name
