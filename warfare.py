@@ -55,10 +55,16 @@ def to_wound(attacker_str, defender_tough, number_of_hits):
 def armour_save(attacker_ap, defender_save, number_of_wounds, defender_inv=None):
     """this will determine if a wound is a kill"""
     ratio = SAVERATIO[int(defender_save)]
-    if attacker_ap <= defender_save and not defender_inv:
-        ratio = 1
-    elif defender_inv and attacker_ap <= defender_save:
-        ratio = SAVERATIO[defender_inv]
+    try:
+        invun_save = defender_inv
+        if invun_save <= defender_save:
+            ratio = SAVERATIO[int(invun_save)]
+        if attacker_ap <= defender_save:
+            ratio = SAVERATIO[int(invun_save)]
+    except TypeError:
+        if attacker_ap <= defender_save:
+            ratio = 1
+
     unsaved_wounds = number_of_wounds * ratio
     return unsaved_wounds
 
@@ -110,6 +116,22 @@ def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
                                               wounds)
         if new_size_of_unit_two < 1:
             print "wiped out"
+            new_size_of_unit_two = 0
+            print('combat results:\n'
+                  '{0} {1} fought {2} {3}\n'
+                  '{1} attacked {4} times\n'
+                  '{1} scored {5} unsaved wounds\n'
+                  '{3} was reduced to {6} models\n\n'
+
+                  'next round:\n\n'
+                  '{0} {1}\n'
+                  'vs\n'
+                  'Nothing').format(unit_one_size, original_unit_one,
+                                    unit_two_size, original_unit_two,
+                                    friendly_attacks, wounds,
+                                    new_size_of_unit_two)
+            return
+
         if who_charged == original_unit_two:
                 charging = True
         else:
@@ -147,6 +169,23 @@ def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
                                               wounds)
         if new_size_of_unit_one < 1:
             print "wiped out"
+            new_size_of_unit_one = 0
+            print('combat results:\n'
+                  '{0} {1} fought {2} {3}\n'
+                  '{1} attacked {4} times\n'
+                  '{1} scored {5} unsaved wounds\n'
+                  '{3} was reduced to {6} models\n\n'
+
+                  'next round:\n\n'
+                  '{0} {1}\n'
+                  'vs\n'
+                  'Nothing').format(unit_two_size, original_unit_two,
+                                    unit_one_size, original_unit_one,
+                                    friendly_attacks, wounds,
+                                    new_size_of_unit_one)
+            return
+
+
         if who_charged == original_unit_one:
                 charging = True
         else:
@@ -180,31 +219,31 @@ def combat(unit_one, unit_one_size,  unit_two, unit_two_size, who_charged):
         wounds = combat_result(unit_two, unit_one, friendly_attacks)
         new_size_of_unit_two = resolve_deaths(unit_two['wounds'], unit_two_size,
                                               wounds)
-        # if who_charged == original_unit_two:
-        #     charging = True
-        # else:
-        #     charging = False
-        # enemy_attacks = generate_attacks(unit_two['attacks'],
-        #                                  unit_two_size, charging)
-        # wounds_returned = combat_result(unit_one, unit_two, enemy_attacks)
-        # new_size_of_unit_one = resolve_deaths(unit_one['wounds'], unit_one_size,
-        #                                       wounds_returned)
-        # print('combat results:\n'
-        #       '{0} {1} fought {2} {3}\n'
-        #       '{1} attacked {4} times\n'
-        #       '{1} scored {5} unsaved wounds\n'
-        #       '{3} was reduced to {6} models\n\n'
-        #       '{2} {3} attacked with at the same time with\n'
-        #       '{7} attacks scoring\n'
-        #       '{8} unsaved wounds\n'
-        #       '{0} {1} was reduced to {9}\n\n'
-        #       'next round:\n\n'
-        #       '{9} {1}\n'
-        #       'vs\n'
-        #       '{6} {3}').format(unit_one_size, original_unit_one, unit_two_size,
-        #                         original_unit_two, friendly_attacks, wounds,
-        #                         new_size_of_unit_two, enemy_attacks,
-        #                         wounds_returned, new_size_of_unit_one)
+        if who_charged == original_unit_two:
+            charging = True
+        else:
+            charging = False
+        enemy_attacks = generate_attacks(unit_two['attacks'],
+                                         unit_two_size, charging)
+        wounds_returned = combat_result(unit_one, unit_two, enemy_attacks)
+        new_size_of_unit_one = resolve_deaths(unit_one['wounds'], unit_one_size,
+                                              wounds_returned)
+        print('combat results:\n'
+              '{0} {1} fought {2} {3}\n'
+              '{1} attacked {4} times\n'
+              '{1} scored {5} unsaved wounds\n'
+              '{3} was reduced to {6} models\n\n'
+              '{2} {3} attacked with at the same time with\n'
+              '{7} attacks scoring\n'
+              '{8} unsaved wounds\n'
+              '{0} {1} was reduced to {9}\n\n'
+              'next round:\n\n'
+              '{9} {1}\n'
+              'vs\n'
+              '{6} {3}').format(unit_one_size, original_unit_one, unit_two_size,
+                                original_unit_two, friendly_attacks, wounds,
+                                new_size_of_unit_two, enemy_attacks,
+                                wounds_returned, new_size_of_unit_one)
 
 
 if __name__ == '__main__':
